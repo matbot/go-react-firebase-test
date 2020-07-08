@@ -1,4 +1,4 @@
-import React from "react";
+import React, {SyntheticEvent, useCallback, useState} from "react";
 import Avatar from '@material-ui/core/Avatar';
 import Button from "@material-ui/core/Button";
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -11,6 +11,7 @@ import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import { GithubLoginButton } from "react-social-login-buttons";
+import firebase from "./utils/firebase";
 // whew, imports.
 
 // set component styles
@@ -49,8 +50,37 @@ const useStyles = makeStyles(theme => ({
     }
 }));
 
+type State = {
+    email: string
+    password: string
+}
+const initialState = {
+    email: '',
+    password: '',
+}
+
 const SignUp: React.FC = () => {
     const classes = useStyles();
+    const [state, setState] = useState<State>(initialState);
+
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const name = e.target.name;
+        const value = e.target.value;
+        setState(s => ({...s, [name]: value}))
+    },[])
+
+    const handleSubmit = useCallback(async (e: SyntheticEvent) => {
+        e.preventDefault()
+        const { email, password } = state
+        try {
+            const res = await firebase.auth().createUserWithEmailAndPassword(email, password)
+            console.log('res: ', res)
+        } catch (e) {
+            // error handling
+            console.error(e)
+        }
+    }, [state])
+
     return (
         <Container component="main" maxWidth="xs">
             <CssBaseline/>
@@ -61,7 +91,7 @@ const SignUp: React.FC = () => {
                 <Typography component="h1" variant="h5">
                     Sign up
                 </Typography>
-                <form className={classes.form} noValidate>
+                <form className={classes.form} noValidate autoComplete="off" onSubmit={handleSubmit}>
                     <Grid container spacing={2}>
                         <Grid item xs={12}>
                             <TextField
@@ -71,7 +101,9 @@ const SignUp: React.FC = () => {
                                 id="email"
                                 label="Email Address"
                                 name="email"
+                                value={state.email}
                                 autoComplete="email"
+                                onChange={handleChange}
                             />
                         </Grid>
                         <Grid item xs={12}>
@@ -83,7 +115,9 @@ const SignUp: React.FC = () => {
                                 label="Password"
                                 type="password"
                                 id="password"
+                                value={state.password}
                                 autoComplete="current-password"
+                                onChange={handleChange}
                             />
                         </Grid>
                     </Grid>
@@ -93,7 +127,8 @@ const SignUp: React.FC = () => {
                         fullWidth
                         variant="contained"
                         color="primary"
-                        className={classes.submit}>
+                        className={classes.submit}
+                        >
                         Sign Up
                     </Button>
 
